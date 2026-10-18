@@ -14,17 +14,48 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Cambiar a la rama de Español (PR #1522 de SammyL)
-        shell: bash
+      - name: Aplicar soporte de Español (PR #1522 de SammyL)
         run: |
-          git fetch https://github.com/storytold/wordcraft.git pull/1522/head:spanish-branch
-          git checkout spanish-branch
+          git config --global user.name "Cloud Builder"
+          git config --global user.email "builder@github.com"
+          git fetch https://github.com/storytold/wordcraft.git pull/1522/head:spanish-proof
+          git merge spanish-proof --no-edit
+
+      - name: Corregir copiado y pegado de tablas
+        shell: pwsh
+        run: |
+          $file = "crates/doc/src/edit.rs"
+          $target = "        for p in self.paths_between(&a, &b) {"
+          $patch = @"
+                  if let (Some((ta, ra, _)), Some((tb, rb, _))) = (a.path.cell(), b.path.cell()) {
+                      if ta == tb {
+                          if let Some(t) = self.table(a.story, &ta) {
+                              let r0 = ra.min(rb);
+                              let r1 = ra.max(rb);
+                              let mut sub = t.clone();
+                              if r0 == 0 && r1 + 1 >= t.rows.len() {
+                                  out.push(Block::Table(sub));
+                                  return out;
+                              } else if r1 < t.rows.len() {
+                                  sub.rows = t.rows[r0..=r1].to_vec();
+                                  out.push(Block::Table(sub));
+                                  return out;
+                              }
+                          }
+                      }
+                  }
+          "@
+          $content = Get-Content $file -Raw
+          $newContent = $content.Replace($target, "$patch`n$target")
+          if (-not $newContent.Contains("Block::Table(sub)")) {
+              throw "Error: no se pudo aplicar el parche de tablas"
+          }
+          Set-Content $file -Value $newContent -NoNewline
 
       - name: Configurar Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Compilar WordCraft en modo Release
-        shell: bash
         run: |
           cargo build --release --bin wordcraft --bin wordcraft-cli
 
