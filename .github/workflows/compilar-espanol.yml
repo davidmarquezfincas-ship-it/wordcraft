@@ -14,17 +14,17 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Aplicar soporte de Español (PR #1522 de SammyL)
+      - name: Cambiar a la rama de Español (PR #1522 de SammyL)
+        shell: bash
         run: |
-          git config --global user.name "Cloud Builder"
-          git config --global user.email "builder@github.com"
-          git fetch https://github.com/storytold/wordcraft.git pull/1522/head:spanish-proof
-          git merge spanish-proof --no-edit
+          git fetch https://github.com/storytold/wordcraft.git pull/1522/head:spanish-branch
+          git checkout spanish-branch
 
       - name: Configurar Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Compilar WordCraft en modo Release
+        shell: bash
         run: |
           cargo build --release --bin wordcraft --bin wordcraft-cli
 
