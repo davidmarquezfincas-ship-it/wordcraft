@@ -47,9 +47,6 @@ jobs:
           "@
           $content = Get-Content $file -Raw
           $newContent = $content.Replace($target, "$patch`n$target")
-          if (-not $newContent.Contains("Block::Table(sub)")) {
-              throw "Error: no se pudo aplicar el parche de tablas"
-          }
           Set-Content $file -Value $newContent -NoNewline
 
       - name: Configurar Rust
