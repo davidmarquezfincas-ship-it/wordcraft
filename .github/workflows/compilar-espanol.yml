@@ -1,4 +1,4 @@
-name: Compilar WordCraft con Español
+name: Compilar WordCraft con EspaÃ±ol
 
 on:
   workflow_dispatch:
@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Aplicar soporte de Español (PR #1522 de SammyL)
+      - name: Aplicar soporte de EspaÃ±ol (PR #1522 de SammyL)
         run: |
           git config --global user.name "Cloud Builder"
           git config --global user.email "builder@github.com"
