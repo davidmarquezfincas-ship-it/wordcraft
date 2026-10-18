@@ -24,46 +24,40 @@ jobs:
         shell: pwsh
         run: |
           $file = "crates/doc/src/edit.rs"
-          $target = @"
-            return out;
-        }
-        for p in self.paths_between(&a, &b) {
-"@
-          $patch = @"
-            return out;
-        }
-        if let (Some((ta, ra, _)), Some((tb, rb, _))) = (a.path.cell(), b.path.cell()) {
-            if ta == tb {
-                if let Some(t) = self.table(a.story, &ta) {
-                    let r0 = ra.min(rb);
-                    let r1 = ra.max(rb);
-                    let mut sub = t.clone();
-                    if r0 == 0 && r1 + 1 >= t.rows.len() {
-                        out.push(Block::Table(sub));
-                        return out;
-                    } else if r1 < t.rows.len() {
-                        sub.rows = t.rows[r0..=r1].to_vec();
-                        out.push(Block::Table(sub));
-                        return out;
-                    }
-                }
-            }
-        }
-        for p in self.paths_between(&a, &b) {
-"@
-          $content = [System.IO.File]::ReadAllText($file)
-          if ($content.Contains("`r`n")) {
-              $target = $target.Replace("`r`n", "`n").Replace("`n", "`r`n")
-              $patch = $patch.Replace("`r`n", "`n").Replace("`n", "`r`n")
-          } else {
-              $target = $target.Replace("`r`n", "`n")
-              $patch = $patch.Replace("`r`n", "`n")
+          $c = [System.IO.File]::ReadAllText($file)
+          $crlf = $c.Contains("`r`n")
+          $old = "return out;`n        }`n        for p in self.paths_between(&a, &b) {"
+          $newLines = @(
+              "return out;"
+              "        }"
+              "        if let (Some((ta, ra, _)), Some((tb, rb, _))) = (a.path.cell(), b.path.cell()) {"
+              "            if ta == tb {"
+              "                if let Some(t) = self.table(a.story, &ta) {"
+              "                    let r0 = ra.min(rb);"
+              "                    let r1 = ra.max(rb);"
+              "                    let mut sub = t.clone();"
+              "                    if r0 == 0 && r1 + 1 >= t.rows.len() {"
+              "                        out.push(Block::Table(sub));"
+              "                        return out;"
+              "                    } else if r1 < t.rows.len() {"
+              "                        sub.rows = t.rows[r0..=r1].to_vec();"
+              "                        out.push(Block::Table(sub));"
+              "                        return out;"
+              "                    }"
+              "                }"
+              "            }"
+              "        }"
+              "        for p in self.paths_between(&a, &b) {"
+          ) -join "`n"
+          if ($crlf) {
+              $old = $old.Replace("`n", "`r`n")
+              $newLines = $newLines.Replace("`n", "`r`n")
           }
-          if (-not $content.Contains($target)) {
+          if (-not $c.Contains($old)) {
               throw "Target string not found in $file"
           }
-          $newContent = $content.Replace($target, $patch)
-          [System.IO.File]::WriteAllText($file, $newContent)
+          $c = $c.Replace($old, $newLines)
+          [System.IO.File]::WriteAllText($file, $c)
           Write-Output "Parche de tablas aplicado con exito."
 
       - name: Configurar Rust
