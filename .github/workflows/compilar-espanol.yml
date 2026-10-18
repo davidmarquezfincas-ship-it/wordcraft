@@ -1,0 +1,37 @@
+name: Compilar WordCraft con Español
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Compilar ejecutable de Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Aplicar soporte de Español (PR #1522 de SammyL)
+        run: |
+          git config --global user.name "Cloud Builder"
+          git config --global user.email "builder@github.com"
+          git fetch https://github.com/storytold/wordcraft.git pull/1522/head:spanish-proof
+          git merge spanish-proof --no-edit
+
+      - name: Configurar Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Compilar WordCraft en modo Release
+        run: |
+          cargo build --release --bin wordcraft --bin wordcraft-cli
+
+      - name: Guardar ejecutable como artefacto descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: WordCraft-Espanol-Windows
+          path: |
+            target/release/wordcraft.exe
+            target/release/wordcraft-cli.exe
